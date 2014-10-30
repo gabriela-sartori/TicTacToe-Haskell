@@ -4,6 +4,7 @@ import Data.List
 import Data.List.Split
 import Data.Sequence()
 
+{- Definir tipos novos -}
 data Jogador = Primeiro | Segundo deriving (Ord, Eq, Show, Read)
 data Slot = Xis | Bola | Empty deriving (Ord, Eq, Show, Read)
 type Map  = [Slot]
@@ -18,6 +19,7 @@ drawSlot Xis   = "X"
 drawSlot Bola  = "O"
 drawSlot Empty = " "
 
+{- Retorna uma String representando o campo e as peças do Jogo Da Velha -}
 drawMap :: Map -> String
 drawMap xs = unlines $ intersperse "---------" $ map (intercalate " | ") $ chunksOf 3 $ map drawSlot xs
 
