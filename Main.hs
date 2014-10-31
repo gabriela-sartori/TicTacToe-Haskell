@@ -1,49 +1,29 @@
 import Control.Monad()
-import Data.Char
+import Data.Char()
 import Data.List
 import Data.List.Split
 import Data.Sequence()
 import System.Random
-
-{- Definir tipos novos -}
-data PlayerType = Human | Machine
-data Jogador = Primeiro | Segundo deriving (Ord, Eq, Show, Read)
-data Slot = Xis | Bola | Empty deriving (Ord, Eq, Show, Read)
-type Map  = [Slot]
-
-winCombinations :: [[Int]]
-winCombinations = [ [1, 2, 3]
-                  , [4, 5, 6]
-                  , [7, 8, 9]
-                  , [1, 4, 7]
-                  , [2, 5, 8]
-                  , [3, 6, 9]
-                  , [1, 5, 9]
-                  , [7, 5, 3]
-                  ]
-
-{- Gera um mapa novo -}
-cleanMap :: Map
-cleanMap = replicate 9 Empty
+import Global
 
 {- Retorna a string de cada tipo: X, 0 ou vazio -}
-drawSlot :: Slot -> String
-drawSlot Xis   = "X"
-drawSlot Bola  = "O"
-drawSlot Empty = " "
+getSlotStr :: Slot -> String
+getSlotStr Xis   = "X"
+getSlotStr Bola  = "O"
+getSlotStr Empty = " "
 
 {- Retorna uma String representando o campo e as peças do Jogo Da Velha -}
 drawMap :: Map -> String
-drawMap xs = unlines $ intersperse "---------" $ map (intercalate " | ") $ chunksOf 3 $ map drawSlot xs
+drawMap xs = unlines $ intersperse "---------" $ map (intercalate " | ") $ chunksOf 3 $ map getSlotStr xs
 
 {- Retorna se todos os campos foram preenchidos -}
 isGameOver :: Map -> Bool
 isGameOver xs = Empty `notElem` xs
 
 {- Retorna a peça do jogador -}
-getSlotByPlayer :: Jogador -> Slot
-getSlotByPlayer Primeiro = Xis
-getSlotByPlayer Segundo  = Bola
+getPlayerPiece :: Jogador -> Slot
+getPlayerPiece Primeiro = Xis
+getPlayerPiece Segundo  = Bola
 
 {- Retorna a peça do mapa em função do seu indice -}
 getSlotByIndex :: Int -> Map -> Slot
@@ -52,7 +32,7 @@ getSlotByIndex index xs = xs !! index
 {- Verifica se determinado jogador ganhou -}
 isPlayerWinner :: Jogador -> Map -> Bool
 isPlayerWinner player xs = elem True $ map (all matches) winCombinations where
-    matches slot = getSlotByIndex (slot - 1) xs == getSlotByPlayer player
+    matches slot = getSlotByIndex (slot - 1) xs == getPlayerPiece player
 
 {- Verifica as combinações e retorna se algum jogador ganhou o jogo. Caso contrário retorna Nothing -}
 getWinner :: Map -> Maybe Jogador
@@ -67,26 +47,43 @@ replace value index xs = map (\(i, val) -> if i == index then value else val) (z
 
 {- Faz a jogada, substituindo vazio pela peça do jogador -}
 modifyMap :: Map -> Jogador -> Int -> Map
-modifyMap xs player jogada = replace (getSlotByPlayer player) (jogada - 1) xs
+modifyMap xs player jogada = replace (getPlayerPiece player) (jogada - 1) xs
+
+isValidDigit :: String -> Bool
+isValidDigit []  = False
+isValidDigit str = head str `elem` ['0'..'9']
 
 {- Cada jogada -}
 jogadaHuman :: Map -> IO Int
 jogadaHuman _map = do
     raw_jogada <- getLine
-    let jogada = read raw_jogada
-    if jogada >= 1 && jogada <= 9 then
-        if _map !! (jogada - 1) == Empty then
-                return jogada
-        else putStrLn "Slot já ocupado."
-          >> jogadaHuman _map
-    else putStrLn "Jogada Invalida"
-      >> jogadaHuman _map
+    if isValidDigit raw_jogada then do
+        let casa_jogada = read raw_jogada
+        if casa_jogada >= 1 && casa_jogada <= 9 then
+            if getSlotByIndex (casa_jogada - 1) _map == Empty then
+                return casa_jogada
+            else putStrLn "Slot já ocupado."
+                 >> jogadaHuman _map
+        else putStrLn "Digito precisa estar na margem [1..9]"
+             >> jogadaHuman _map
+    else putStrLn "Digito inválido."
+         >> jogadaHuman _map
 
 {- Retorna as jogadas disponíveis -}
 getAvaiableJogadas :: Map -> [(Int, Slot)]
 getAvaiableJogadas _map = filter ((== Empty) . snd) (zip [1..] _map)
 
 {- A AI da Machine é escolher uma casa aleatória dentre as disponiveis XD -}
+{-
+    Implementar uma A.I. mais inteligente
+    Passos:
+        1. Verificar se tem uma jogada que o faria ganhar
+        2. Verificar se tem uma jogada que o impidiria perder
+        3. Verificar uma jogada que possa ter continuidade ou que seja boa. Como ? XD
+
+    Flawless A.I.:
+        http://programmers.stackexchange.com/a/213570
+-}
 jogadaMachine :: Map -> IO Int
 jogadaMachine _map = do
     let jogadas = getAvaiableJogadas _map
@@ -117,9 +114,11 @@ mainGame _round _player1 _player2 _map = do
 {- Começar um jogo novo ou sair -}
 main :: IO()
 main = do
-    putStrLn "Menu:\n  1 - Human vs Human\n  2 - Human vs Machine\n  3 - Machine vs Machine\n _ - Exit"
-    start <- getLine
-    let doStart = toLower $ head start
+    putStrLn "Menu:\n  1 - Human vs Human\n  2 - Human vs Machine\n  3 - Machine vs Machine\n  _ - Exit"
+    str_start <- getLine
+    let doStart = if isValidDigit str_start then head str_start else '_'
+    let cleanMap :: Map -- Gera um mapa novo
+        cleanMap = replicate 9 Empty
     case doStart of
         '1' -> mainGame Primeiro Human Human     cleanMap >> main
         '2' -> mainGame Primeiro Human Machine   cleanMap >> main
