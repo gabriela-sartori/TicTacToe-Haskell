@@ -82,15 +82,18 @@ jogadaHuman _map = do
     else putStrLn "Jogada Invalida"
       >> jogadaHuman _map
 
+{- Retorna as jogadas disponíveis -}
 getAvaiableJogadas :: Map -> [(Int, Slot)]
-getAvaiableJogadas _map = filter ((== Empty) . snd) (zip [0..] _map)
+getAvaiableJogadas _map = filter ((== Empty) . snd) (zip [1..] _map)
 
+{- A AI da Machine é escolher uma casa aleatória dentre as disponiveis XD -}
 jogadaMachine :: Map -> IO Int
 jogadaMachine _map = do
     let jogadas = getAvaiableJogadas _map
     _random <- randomRIO (0, length jogadas - 1)
-    return $ fst $ jogadas !! _random
+    return . fst $ jogadas !! _random
 
+{- Retorna a jogada de humano ou maquina dependendo de quem é o round e do tipo do jogador 1 e 2 -}
 getJogada :: Jogador -> (PlayerType, PlayerType) -> Map -> IO Int
 getJogada Primeiro (Human,   _) _map = jogadaHuman   _map
 getJogada Primeiro (Machine, _) _map = jogadaMachine _map
@@ -103,9 +106,9 @@ mainGame _round _player1 _player2 _map = do
     putStrLn $ drawMap _map
     let ganhador = getWinner _map
     case ganhador of
-        Just x -> putStrLn $ "O ganhador foi: " ++ show x
+        Just x  ->  putStrLn $ "O ganhador foi: " ++ show x
         Nothing ->  if isGameOver _map then
-                        putStrLn "Finished."
+                        putStrLn "Empate!"
                     else do
                         putStrLn $ "Jogador " ++ show _round ++ " faça sua jogada:"
                         casa_jogada <- getJogada _round (_player1, _player2) _map
