@@ -37,10 +37,6 @@ aiWinCombinations =
     , ([7, 5], 3), ([7, 3], 5), ([5, 3], 7)
     ]
 
-{- Combinações que faltam 1 jogada para a derrota. É uma cópia da anterior, mas faz a verificação com a peça inversa -}
-aiAvoidLoseCombinations :: [([Int], Int)] -- Lista de tupla: (Combinacao, posParaEvitarDerrota)
-aiAvoidLoseCombinations = aiWinCombinations
-
 {- Combinações que fazem uma fork, ou seja, poder ganhar de 2 formas -}
 aiForkCombinations :: [([Int], [Int], Int)] -- Lista de tupla (Combinacao, EspacosQuePrecisamEstarLivres, posParaFork)
 aiForkCombinations =
@@ -54,14 +50,7 @@ aiForkCombinations =
     , ([7, 3], [8, 6, 9], 9)
     , ([1, 5], [7, 9, 2, 3], 3) -- quina, centro -> quina
     --, ([3, 5], [7, 9], )
-        -- desisti
-    ]
-
-{- Posicão para evitar um Fork -}
-aiAvoidForkCombinations :: [([Int], Int)] -- Lista de tupla (Combinacao, posParaEvitarFork)
-aiAvoidForkCombinations =
-    [ ([1, 3], 5)
-       -- desisti
-       -- nao sei se vou continuar isso, perdido e sem fé
-       -- melhor implementar aiToWin e aiToAvoid
+        -- desisti, acho que é melhor fazer programaticamente
+        -- desisti, acho que é melhor fazer programaticamente
+        -- desisti, acho que é melhor fazer programaticamente
     ]

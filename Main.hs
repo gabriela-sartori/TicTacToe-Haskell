@@ -5,6 +5,8 @@ import Data.List.Split
 import Data.Sequence()
 import System.Random
 import Global
+import Control.Applicative()
+import Data.Functor()
 
 {- Retorna a string de cada tipo: X, 0 ou vazio -}
 getSlotStr :: Slot -> String
@@ -24,6 +26,11 @@ isGameOver xs = Empty `notElem` xs
 getPlayerPiece :: Jogador -> Slot
 getPlayerPiece Primeiro = Xis
 getPlayerPiece Segundo  = Bola
+
+{- Retorna o jogador inimigo -}
+getOponent :: Jogador -> Jogador
+getOponent Primeiro = Segundo
+getOponent Segundo  = Primeiro
 
 {- Retorna a peça do mapa em função do seu indice -}
 getSlotByIndex :: Int -> Map -> Slot
@@ -73,29 +80,41 @@ jogadaHuman _map = do
 getAvaiableJogadas :: Map -> [(Int, Slot)]
 getAvaiableJogadas _map = filter ((== Empty) . snd) (zip [1..] _map)
 
-{- A AI da Machine é escolher uma casa aleatória dentre as disponiveis XD -}
+getJogadaToWin :: Jogador -> Map -> Maybe Int
+getJogadaToWin _player _map = find (const True) $ map snd $ filter match aiWinCombinations where
+        match (combination, win_pos) = all (\slot -> getSlotByIndex (slot - 1) _map == getPlayerPiece _player) combination
+                                       && getSlotByIndex (win_pos - 1) _map == Empty
+
 {-
-    Implementar uma A.I. mais inteligente
-    Passos:
+    A.I. atual:
         1. Verificar se tem uma jogada que o faria ganhar
-        2. Verificar se tem uma jogada que o impidiria perder
-        3. Verificar uma jogada que possa ter continuidade ou que seja boa. Como ? XD
+        2. Verificar se tem uma jogada que o impediria perder
+        3. Escolher uma casa aleatória dentre as disponíveis
 
     Flawless A.I.:
         http://programmers.stackexchange.com/a/213570
 -}
-jogadaMachine :: Map -> IO Int
-jogadaMachine _map = do
-    let jogadas = getAvaiableJogadas _map
-    _random <- randomRIO (0, length jogadas - 1)
-    return . fst $ jogadas !! _random
+jogadaMachine :: Jogador -> Map -> IO Int
+jogadaMachine _jogador _map = do
+    let win = getJogadaToWin _jogador _map
+    case win of
+        Just jogada -> putStrLn ("::Win " ++ show jogada) >> return jogada
+        Nothing -> do
+            let lose = getJogadaToWin (getOponent _jogador) _map
+            case lose of
+                Just jogada -> putStrLn ("::Block " ++ show jogada) >> return jogada
+                Nothing -> do
+                    let jogadas = getAvaiableJogadas _map
+                    _random <- randomRIO (0, length jogadas - 1)
+                    putStrLn $ "::Random " ++ (show . fst $ jogadas !! _random)
+                    return . fst $ jogadas !! _random
 
 {- Retorna a jogada de humano ou maquina dependendo de quem é o round e do tipo do jogador 1 e 2 -}
 getJogada :: Jogador -> (PlayerType, PlayerType) -> Map -> IO Int
-getJogada Primeiro (Human,   _) _map = jogadaHuman   _map
-getJogada Primeiro (Machine, _) _map = jogadaMachine _map
-getJogada Segundo  (_,   Human) _map = jogadaHuman   _map
-getJogada Segundo  (_, Machine) _map = jogadaMachine _map
+getJogada Primeiro (Human,   _) _map = jogadaHuman            _map
+getJogada Primeiro (Machine, _) _map = jogadaMachine Primeiro _map
+getJogada Segundo  (_,   Human) _map = jogadaHuman            _map
+getJogada Segundo  (_, Machine) _map = jogadaMachine Segundo  _map
 
 {- Cada jogo -}
 mainGame :: Jogador -> PlayerType -> PlayerType -> Map -> IO ()
