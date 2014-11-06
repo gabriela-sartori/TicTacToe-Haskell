@@ -3,8 +3,8 @@ module Global where
 {- Definir tipos novos -}
 data PlayerType = Human | Machine
 data Jogador = Primeiro | Segundo deriving (Ord, Eq, Show, Read)
-data Slot = Xis | Bola | Empty deriving (Ord, Eq, Show, Read)
-type Map  = [Slot]
+data Slot = Xis | Bola deriving (Ord, Eq, Show, Read)
+type Map  = [Maybe Slot]
 
 {- Combinações possíveis para a vitória -}
 winCombinations :: [[Int]]
